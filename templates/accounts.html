@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='full.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='tail.js') }}"></script>
+    <style>
+        .scroll-nav {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .scroll-nav::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .scroll-nav::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+
+        .scroll-nav-btn {
+            display: block;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .scroll-nav-btn:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        .scroll-nav-btn.active {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .scroll-nav {
+                bottom: 0;
+                top: auto;
+                right: 0;
+                left: 0;
+                transform: none;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+                white-space: nowrap;
+                max-height: none;
+            }
+            
+            .scroll-nav-btn {
+                margin: 0 5px;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="alert alert-{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <nav class="scroll-nav">
+        <a href="#profile-pictures" class="scroll-nav-btn" data-section="profile-pictures">Pictures</a>
+        <a href="#profile-info" class="scroll-nav-btn" data-section="profile-info">Profile Info</a>
+        <a href="#profile-name" class="scroll-nav-btn" data-section="profile-name">Profile Name</a>
+        <a href="#chat-bot" class="scroll-nav-btn" data-section="chat-bot">Chat Bot</a>
+        <a href="#accounts" class="scroll-nav-btn" data-section="accounts">Accounts</a>
+        <a href="#cities" class="scroll-nav-btn" data-section="cities">Cities</a>
+    </nav>
+    <div class="navbar bg-base-300">
+
+        {% if profileStatus %}
+            <a class="btn btn-error h-32 w-1/6" href="/profile/{{profile_id}}/disable">Disable {{profile.profile.name}}</a>
+        {% else %}
+            <a class="btn btn-success  h-32 w-1/6" href="/profile/{{profile_id}}/enable">Enable {{profile.profile.name}}</a>
+        {% endif %}
+        
+        <a class="btn h-32 w-3/4  btn-warning text-xl mx-2" href="/">Home</a>
+        <form action="/profile/{{profile_id}}/delete" onsubmit="return confirmDelete()" class="w-1/6"  method="post"><button class="btn btn-error h-32 w-full">DELETE PROFILE</button></form>
+      </div>
+      
+      <div class="divider divider-secondary" id="profile-pictures">PROFILE PICTURES</div>
+
+    <div class="p-4">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 hidden lg:grid-cols-4 gap-4 mb-6">
+            {% if pictures %}
+                {% for picture in pictures %}
+                {% set filename = picture.split('/')[-1] if '/' in picture else picture %}
+                <div class="card bg-base-200">
+                    <figure class="h-48">
+                        <img src="{{ url_for('serve_image', profile_id=profile_id, filename=filename) }}" 
+                             alt="Profile picture" 
+                             class="object-cover w-full h-full"/>
+                    </figure>
+                    <div class="card-body p-2">
+                        <form action="/profile/{{profile_id}}/deletePicture" onsubmit="return confirmDelete()" method="POST" class="w-full">
+                            <input type="hidden" name="filename" value="{{ filename }}">
+                            <button type="submit" class="btn btn-error btn-sm w-full">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full text-center text-gray-500">
+                    No pictures uploaded yet
+                </div>
+            {% endif %}
+        </div>
+    
+        <form action="/profile/{{ profile_id }}/uploadPictures" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Add New Pictures from Directory</span>
+                    <span class="label-text-alt">Select a directory containing JPEG files</span>
+                </label>
+                <input type="file" 
+                       name="pictures" 
+                       accept="image/jpeg"
+                       class="file-input file-input-bordered w-full" 
+                       webkitdirectory 
+                       multiple />
+            </div>
+            <input type="text" name="picturesCount" placeholder="Enter number picture you want for an account" 
+                   class="input input-bordered w-full" 
+                   value="{{profile.picturesCount}}" required>
+            <button type="submit" class="btn btn-primary w-full my-3">Upload Pictures</button>
+        </form>
+        <form action="/profile/{{profile_id}}/updatePictures" method="get"> <button type="submit" class="btn hidden btn-primary w-full my-3">Apply Pictures in Accounts</button></form>
+
+    </div>
+    
+<div class="divider divider-secondary" id="profile-info">Profile Information</div>
+
+<div class="m-6">
+    <form method="POST" action="{{ url_for('update_profile_form', id=profile_id) }}">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Display Name</span>
+            </label>
+            <input type="text" name="displayName" placeholder="Enter display name" 
+                   class="input input-bordered w-full" 
+                   value="{{ profile.displayName if profile else '' }}" required>
+        </div>
+        
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">About Me</span>
+                <span class="label-text-alt">Use {City} for location, {Handle_1} or {Handle_2} for handles</span>
+            </label>
+            <textarea name="aboutMe" placeholder="Enter your bio" 
+                      class="textarea textarea-bordered h-24 w-full" required>{{ profile.aboutMe if profile else '' }}</textarea>
+        </div>
+        
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Age</span>
+            </label>
+            <input type="number" name="age" min="18" max="99" 
+                   placeholder="Enter age" class="input input-bordered w-full" 
+                   value="{{ profile.age if profile else '18' }}" required>
+        </div>
+        
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Height Range (cm)</span>
+            </label>
+            <div class="flex gap-4">
+                <input type="number" name="heightFrom" min="140" max="220" 
+                       placeholder="Min height" class="input input-bordered w-1/2" 
+                       value="{{ profile.heightFrom if profile else '140' }}" required>
+                <input type="number" name="heightTo" min="140" max="220" 
+                       placeholder="Max height" class="input input-bordered w-1/2" 
+                       value="{{ profile.heightTo if profile else '220' }}" required>
+            </div>
+        </div>
+        
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Looking For</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="lookingFor" value="2" class="checkbox"
+                           {% if profile and "2" in profile.lookingFor %}checked{% endif %}>
+                    <span>Chat</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="lookingFor" value="3" class="checkbox"
+                           {% if profile and "3" in profile.lookingFor %}checked{% endif %}>
+                    <span>Dates</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="lookingFor" value="4" class="checkbox"
+                           {% if profile and "4" in profile.lookingFor %}checked{% endif %}>
+                    <span>Friends</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="lookingFor" value="5" class="checkbox"
+                           {% if profile and "5" in profile.lookingFor %}checked{% endif %}>
+                    <span>Networking</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="lookingFor" value="7" class="checkbox"
+                           {% if profile and "7" in profile.lookingFor %}checked{% endif %}>
+                    <span>Hookups</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="lookingFor" value="6" class="checkbox"
+                           {% if profile and "6" in profile.lookingFor %}checked{% endif %}>
+                    <span>Relashionship</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Meet At</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="meetAt" value="1" class="checkbox"
+                           {% if profile and "1" in profile.meetAt %}checked{% endif %}>
+                    <span>My Place</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="meetAt" value="2" class="checkbox"
+                           {% if profile and "2" in profile.meetAt %}checked{% endif %}>
+                    <span>Your Place</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="meetAt" value="3" class="checkbox"
+                           {% if profile and "3" in profile.meetAt %}checked{% endif %}>
+                    <span>Bar</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="meetAt" value="4" class="checkbox"
+                           {% if profile and "4" in profile.meetAt %}checked{% endif %}>
+                    <span>Coffee Shop</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="meetAt" value="5" class="checkbox"
+                           {% if profile and "5" in profile.meetAt %}checked{% endif %}>
+                    <span>Restaurant</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Accept NSFW Pics</span>
+            </label>
+            <select name="acceptNSFWPics" class="select select-bordered w-full">
+                <option value="0" {% if profile and profile.acceptNSFWPics == "0" %}selected{% endif %}>No response</option>
+                <option value="1" {% if profile and profile.acceptNSFWPics == "1" %}selected{% endif %}>Never</option>
+                <option value="2" {% if profile and profile.acceptNSFWPics == "2" %}selected{% endif %}>Not At First</option>
+                <option value="3" {% if profile and profile.acceptNSFWPics == "3" %}selected{% endif %}>Yes Please</option>
+            </select>
+        </div>
+
+        <div class="form-control mt-6">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+    <form method="get" action="/profile/{{ profile_id }}/saveAccountsData" class="hidden"><div class="form-control mt-6">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div></form>
+</div>
+
+
+      <div class="divider divider-secondary" id="profile-name">Profile</div>
+
+      <form class="flex mx-4 my-3 gap-5 justify-center " action={{"/profile/"+profile_id+"/name"}} method="post">
+          <label class="input w-2/4 input-bordered flex items-center gap-2">
+              Profile Name: <input type="text" class="grow" value="{{profile.profile.name}}" name="name"/>
+          </label>
+          <input class="btn btn-primary" type="submit" value="Save Profile Name">
+      </form>
+    
+
+      {# First define the macros #}
+      {% macro render_form_field(label, name, value, type="text", placeholder="", required=false) %}
+      <div class="form-control ">
+          <label class="label">
+              <span class="label-text">{{ label }}</span>
+          </label>
+          <input type="{{ type }}" 
+                 name="{{ name }}" 
+                 value="{{ value if value else '' }}" 
+                 placeholder="{{ placeholder }}"
+                 class="input input-bordered w-full"
+                 {% if required %}required{% endif %}>
+      </div>
+      {% endmacro %}
+    <form>
+        
+    </form>
+
+
+      {% macro render_textarea_field(label, name, value, rows=3, required=false) %}
+      <div class="form-control">
+          <label class="label">
+              <span class="label-text">{{ label }}</span>
+          </label>
+          <textarea name="{{ name }}"
+                    rows="{{ rows }}"
+                    class="textarea textarea-bordered w-full"
+                    {% if required %}required{% endif %}>{{ value if value else '' }}</textarea>
+      </div>
+      {% endmacro %}
+      
+      {# Then the form #}
+      <form method="POST" action="/profile/{{ profile_id }}/save-chat-setting" class="p-4">
+        <div class="divider divider-secondary" id="chat-bot">Chat Bot Configuration</div>
+
+        <div class="form-control col-span-2">
+            <label class="label">
+                <span class="label-text font-bold">Select Chat Mode</span>
+                <span class="label-text-alt">Choose between Private API Bot or ChatGPT</span>
+            </label>
+            <select name="chatMode" class="select select-bordered w-full" onchange="toggleChatSettings(this.value)">
+                <option value="bot" {% if cta.chatMode == 'bot' %}selected{% endif %}>Private API Bot</option>
+                <option value="gpt" {% if cta.chatMode == 'gpt' %}selected{% endif %}>ChatGPT</option>
+            </select>
+        </div>
+          
+          <div id="gptSettings" class="col-span-2 card bg-base-100 shadow-xl p-4 {% if cta.chatMode != 'gpt' %}hidden{% endif %}">
+            <div class="card-body">
+                <h3 class="card-title">GPT Configuration</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{ render_form_field("Primary OpenAI API Key", "openaiKey1", cta.gptSettings.primaryApiKey if cta.gptSettings else "", required=false) }}
+                    {{ render_form_field("Backup OpenAI API Key", "openaiKey2", cta.gptSettings.secondaryApiKey if cta.gptSettings else "") }}
+                    {{ render_textarea_field("GPT Framework", "gptFramework", cta.gptSettings.framework if cta.gptSettings else "", rows=5, required=false) }}
+                </div>
+            </div>
+        </div>
+
+          <div id="botSettings" class="{% if cta.chatMode != 'bot' %}hidden{% endif %}"> 
+          <div class="col-span-2 divider">Required Configuration (Both Modes)</div>
+          
+          {{ render_form_field("Access Token", "accessToken", cta.apiSettings.accessToken if cta.apiSettings else "") }}
+          
+          {{ render_form_field("Version", "version", cta.apiSettings.version if cta.apiSettings else "", required=false) }}
+          {{ render_form_field("Manifest Version", "manifestVersion", cta.apiSettings.manifestVersion if cta.apiSettings else "", required=false) }}
+          {{ render_form_field("Creator ID", "creator_id", cta.apiSettings.creator_id if cta.apiSettings else "", required=false) }}
+          {{ render_form_field("Creator Name", "name", cta.apiSettings.name if cta.apiSettings else "", required=false) }}
+          {{ render_form_field("Preset ID", "preset_id", cta.apiSettings.preset_id if cta.apiSettings else "") }}
+          {{ render_form_field("Creator Age", "age", cta.apiSettings.age if cta.apiSettings else "", type="number", required=false) }}
+          {{ render_textarea_field("User Info", "userInfo", cta.apiSettings.userInfo if cta.apiSettings else "") }}
+          <div class="form-control ">
+            <label class="label">
+                <span class="label-text">AccountID</span>
+            </label>
+            <input type="text" name="AccountID" value="{{profile.apiSettings.AccountID}}" placeholder="AccountID" class="input input-bordered w-full">
+        </div>
+
+          <div class="form-control">
+              <label class="label">
+                  <span class="label-text">Chat Style</span>
+              </label>
+              <select name="chatStyle" class="select select-bordered w-full" required>
+                  <option value="youth" {% if cta.apiSettings and cta.apiSettings.chatStyle == 'youth' %}selected{% endif %}>Youth</option>
+                  <option value="mature" {% if cta.apiSettings and cta.apiSettings.chatStyle == 'mature' %}selected{% endif %}>Mature</option>
+              </select>
+          </div>
+      
+          {{ render_textarea_field("Setting Day Info", "settingDayInfo", cta.apiSettings.settingDayInfo if cta.apiSettings else "", required=false) }}
+          {{ render_textarea_field("Setting Night Info", "settingNightInfo", cta.apiSettings.settingNightInfo if cta.apiSettings else "", required=false) }}
+          {{ render_textarea_field("CTA Info", "ctaInfo", cta.apiSettings.ctaInfo if cta.apiSettings else "", required=false) }}
+          <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title">Message Templates</h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="form-control">
+                        <label class="label">spintax</label>
+                        <textarea name="spintax" class="textarea textarea-bordered h-24">{{ profile.apiSettings.spintax }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">followUpSpintax</label>
+                        <textarea name="followUpSpintax" class="textarea textarea-bordered h-24">{{ profile.apiSettings.followUpSpintax }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">followUpAfterCTA</label>
+                        <textarea name="followUpAfterCTA" class="textarea textarea-bordered h-24">{{ profile.apiSettings.followUpAfterCTA }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">CTA Script</label>
+                        <textarea name="ctaScript" class="textarea textarea-bordered h-24">{{ profile.apiSettings.ctaScript }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Objection Handling</label>
+                        <textarea name="objectionHandling" class="textarea textarea-bordered h-24">{{ profile.apiSettings.objectionHandling }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Typo Rate</label>
+                        <input type="number" step="0.01" value="{{ profile.apiSettings.typo_rate }}" name="typoRate" min="0" max="1" class="input input-bordered" />
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+          <div class="form-control">
+              <label class="label">
+                  <span class="label-text">Response Language</span>
+              </label>
+              <select name="responseLanguage" class="select select-bordered w-full" required>
+                  <option value="English" {% if cta.apiSettings and cta.apiSettings.responseLanguage == 'English' %}selected{% endif %}>English</option>
+                  <option value="French" {% if cta.apiSettings and cta.apiSettings.responseLanguage == 'French' %}selected{% endif %}>French</option>
+                  <option value="Spanish" {% if cta.apiSettings and cta.apiSettings.responseLanguage == 'Spanish' %}selected{% endif %}>Spanish</option>
+              </select>
+          </div>
+      
+          <div class="form-control mt-4">
+              <label class="label cursor-pointer">
+                  <span class="label-text">Enable Sequence</span>
+                  <input type="checkbox" name="enableSequence" class="toggle" 
+                         {% if cta.apiSettings and cta.apiSettings.enableSequence %}checked{% endif %}>
+              </label>
+          </div></div>
+          
+          <button type="submit" class="btn btn-primary mt-4 w-full">Save chat setting</button>
+      </form>
+      
+      <script>
+        function toggleChatSettings(mode) {
+    const gptSettings = document.getElementById('gptSettings');
+    const botSettings = document.getElementById('botSettings');
+
+    if (mode === 'gpt') {
+        gptSettings.classList.remove('hidden');
+        botSettings.classList.add('hidden');
+    } else {
+        gptSettings.classList.add('hidden');
+        botSettings.classList.remove('hidden');
+    }
+}
+      function toggleGPTSettings(mode) {
+        const gptSettings = document.getElementById('gptSettings');
+            if (gptSettings) {
+                gptSettings.classList.toggle('hidden', mode !== 'gpt');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                console.log('Form submission attempted');
+                const formData = new FormData(form);
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+            });
+        });
+      </script>
+
+    
+
+      <div class="divider divider-secondary hidden">ADD PROXY</div>
+      
+
+    <form class="flex mx-auto my-3 gap-5 justify-center hidden" action={{"/profile/"+profile_id+"/addProxy"}} method="post">
+        <label class="input w-2/4 input-bordered flex items-center gap-2">
+            Proxy: <input type="text" class="grow" value="http://user:password@host:port" name="proxy"/>
+        </label>
+        <input class="btn btn-primary" type="submit" value="Add Proxy">
+    </form>
+    
+
+    <div class="divider hidden divider-secondary">List Proxies</div>
+
+    <div class="overflow-x-auto hidden block mx-auto px-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Proxy</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proxy in proxies %}
+                <tr>
+                    <td>{{ proxy }}</td>
+                    <td>
+                        
+                        <form action="/profile/{{profile_id}}/editProxy/{{ loop.index0 }}" method="POST" class="inline">
+                            <input type="text" name="proxy" value="{{ proxy }}" class="input input-bordered" />
+                            <button class="btn btn-warning" type="submit">Edit</button>
+                        </form>
+
+                        <form action="/profile/{{profile_id}}/deleteProxy/{{ loop.index0 }}" onsubmit="return confirmDelete()" method="POST" class="inline">
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    </div>
+    
+    <div class="divider divider-secondary hidden">BULK PROXY IMPORT</div>
+    <form method="post" action={{"/profile/"+profile_id+"/proxies"}} class="flex hidden flex-col gap-2">
+        <label class="input input-bordered flex items-center gap-2 mx-6 h-fit" for="proxies">
+            Proxies:
+            <textarea class="textarea textarea-primary w-full w-fit" name="proxies" placeholder="http://host:user:port"></textarea>
+        </label>
+        <input type="submit" class="btn btn-secondary" value="add List"/>
+    </form>
+
+
+
+
+    <div class="divider divider-secondary hidden">ADD ACCOUNT</div>
+
+    <form class="flex hidden mx-auto flex-col content-center my-3 gap-5 justify-center" action={{"/profile/"+profile_id+"/addAccount"}} method="post">
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            username: <input type="text" class="grow" placeholder="user@gmail.com" name="username"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            authToken: <input type="text" class="grow" placeholder="..." name="authToken"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            token: <input type="text" class="grow" placeholder="deviceToken" name="token"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            deviceInfo: <input type="text" class="grow" placeholder="deviceInfo" name="deviceInfo"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            userAgent: <input type="text" class="grow" placeholder="userAgent" name="userAgent"/>
+        </label>
+       
+
+        
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            City:
+            <select class="textarea textarea-primary w-5/6 h-full" name="city" class="grow">
+                <option value=""></option>
+                {% for city in cities %}
+                    <option value="{{ city.city }}">{{ city.city }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <input class="btn btn-primary" type="submit" value="Add ACCOUNT">
+    </form>
+    
+    <div class="divider divider-secondary hidden">BULK Accounts IMPORT</div>
+        <form method="post" action={{"/profile/"+profile_id+"/accounts"}} class="flex flex-col gap-2">
+            <label class="input input-bordered flex items-center gap-2 mx-6 h-fit" for="accounts">
+                Accounts:
+                <textarea class="textarea textarea-primary w-full w-fit" name="accounts" placeholder="email:auth:token:deviceInfo:userAgent"></textarea>
+            </label>
+            <input type="submit" class="btn btn-secondary" value="add List"/>
+        </form>
+
+    <div class="divider divider-secondary" id="accounts">List Accounts</div>
+
+    <div class="overflow-x-auto">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>profileId</th>
+                    <th>userName</th>
+                    <th>city</th>
+                    <th>bio</th>
+                    <th>Name</th>
+                    <th>Ban</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr>
+                    <th>{{ loop.index }}</th>
+                    <td>{{ account.profileId }}</td>
+                    <td>{{ account.userName }}</td>
+                    <td>{{ account.city }}</td>
+                    <td>{{ account.bio }}</td>
+                    <td>{{ account.name }}</td>
+                    <td>{{ account.banStatus }}</td>
+                    <td>
+                        {% if account.active %}
+                            <span class="text-green-500">Active</span>
+                        {% else %}
+                            <span class="text-red-500">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if account.active %}
+                        <form action="/profile/{{profile_id}}/deactivateAccount/{{ loop.index0 }}" method="POST" class="inline">
+                            <button class="btn btn-danger" type="submit">Deactivate</button>
+                        </form>
+                        {% else %}
+                        <form action="/profile/{{profile_id}}/activateAccount/{{ loop.index0 }}" method="POST" class="inline">
+                            <button class="btn btn-success" type="submit">Activate</button>
+                        </form>
+                        {% endif %}
+
+                        <a href="/profile/{{profile_id}}/editAccount/{{ loop.index0 }}" class="btn btn-warning">Edit</a>
+
+                        <form action="/profile/{{profile_id}}/deleteAccount/{{ loop.index0 }}" onsubmit="return confirmDelete()" method="POST" class="inline">
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="divider divider-secondary">BULK CITY IMPORT</div>
+    <form method="post" action={{"/profile/"+profile_id+"/cities"}} class="flex flex-col gap-2">
+        <label class="input input-bordered flex items-center gap-2 mx-6 h-fit" for="citie">
+            cities:
+            <textarea class="textarea textarea-primary w-full w-fit" name="cities" placeholder="cityName:lat:long"></textarea>
+        </label>
+        <input type="submit" class="btn btn-secondary" value="add List"/>
+    </form>
+
+
+    <div class="divider divider-secondary hidden">ADD CITY</div>
+
+    <form class="flex mx-auto flex-col content-center hidden my-3 gap-5 justify-center" action="/profile/{{profile_id}}/addCity" method="post">
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            City Name: <input type="text" class="grow" placeholder="City Name" name="city"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            Latitude: <input type="text" class="grow" placeholder="Latitude" name="lat"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            Longitude: <input type="text" class="grow" placeholder="Longitude" name="long"/>
+        </label>
+
+        <input class="btn btn-primary" type="submit" value="Add CITY">
+    </form>
+
+    <div class="divider divider-secondary" id="cities">List Cities</div>
+
+    <div class="overflow-x-auto">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>City</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for city in cities %}
+                <tr>
+                    <td>{{ city.city }}</td>
+                    <td>{{ city.lat }}</td>
+                    <td>{{ city.long }}</td>
+                    <td>
+                        <form action="/profile/{{profile_id}}/deleteCity/{{ loop.index0 }}" onsubmit="return confirmDelete()" method="POST" class="inline">
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function confirmDelete() {
+            return confirm("Are you sure you want to delete this profile? This action cannot be undone.");
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navButtons = document.querySelectorAll('.scroll-nav-btn');
+            
+            const sections = {};
+            navButtons.forEach(button => {
+                const sectionId = button.getAttribute('data-section');
+                sections[sectionId] = document.getElementById(sectionId);
+            });
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section');
+                    sections[sectionId].scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+            
+            let ticking = false;
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        highlightActiveSection();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+            
+            function highlightActiveSection() {
+                const scrollPosition = window.scrollY + 100; 
+                
+                for (let sectionId in sections) {
+                    const section = sections[sectionId];
+                    const sectionTop = section.offsetTop;
+                    const sectionBottom = sectionTop + section.offsetHeight;
+                    
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                        navButtons.forEach(btn => btn.classList.remove('active'));
+                        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+                    }
+                }
+            }
+            
+            highlightActiveSection();
+        });
+
+        function confirmDelete() {
+            return confirm("Are you sure you want to delete this profile? This action cannot be undone.");
+        }
+    </script>
+</body>
+</html>

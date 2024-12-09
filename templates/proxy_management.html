@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='full.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='tail.js') }}"></script>
+    <title>Global Proxy Management</title>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Global Proxy Management</h1>
+                <a href="/" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            </div>
+            
+            <!-- Existing Proxies Section -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Current Proxies ({{ proxies|length }})</h2>
+                    <div class="text-sm text-gray-500">
+                        {% if proxies|length > 0 %}
+                            {% if last_test_results %}
+                                Last test: Working: {{ last_test_results.working }}, Failed: {{ last_test_results.failed }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if proxies|length > 0 %}
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 mb-6">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Proxy URL
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for proxy in proxies %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                                        {{ proxy }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if proxy_status and proxy in proxy_status %}
+                                            {% if proxy_status[proxy] %}
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Working
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Failed
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 mb-6">
+                        <p class="text-gray-500">No proxies added yet</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Bulk Import Section -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-3">Bulk Import Proxies</h2>
+                <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <strong>Format:</strong> One proxy per line:<br>
+                        <code class="bg-blue-100 px-2 py-1 rounded">http://username:password@hostname:port/</code><br>
+                        <strong>Example:</strong><br>
+                        <code class="bg-blue-100 px-2 py-1 rounded">http://n7bp03fo9whww01:6ei6qg4f5n5agjp@rp.proxyscrape.com:6060/</code>
+                    </p>
+                </div>
+                <form method="POST" action="{{ url_for('bulk_import_proxies') }}" class="space-y-4">
+                    <div>
+                        <textarea 
+                            name="proxies" 
+                            rows="10" 
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                            placeholder="http://username:password@hostname:port/"></textarea>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                        Import Proxies
+                    </button>
+                </form>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4">
+                <form method="POST" action="{{ url_for('test_proxies') }}">
+                    <button type="submit" 
+                            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                            onclick="this.disabled=true;this.textContent='Testing...';this.form.submit();">
+                        Test Proxy Connections
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('delete_failed_proxies') }}">
+                    <button type="submit" 
+                            class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+                            onclick="return confirm('Are you sure you want to delete all non-working proxies?');">
+                        Delete Not Working Proxies
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('delete_all_proxies') }}">
+                    <button type="submit" 
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                            onclick="return confirm('Are you sure you want to delete ALL proxies? This action cannot be undone.');">
+                        Delete All Proxies
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>

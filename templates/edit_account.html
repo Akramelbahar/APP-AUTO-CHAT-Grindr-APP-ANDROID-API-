@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='full.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='tail.js') }}"></script>
+</head>
+<body>
+    <div class="navbar bg-base-100">
+        <a class="btn  w-full mx-6 btn-warning text-xl" href="/">Home</a>
+      </div>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="alert alert-{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <div class="divider divider-secondary">EDIT ACCOUNT</div>
+
+    <form class="flex mx-auto flex-col content-center my-3 gap-5 justify-center" action="/profile/{{profile_id}}/editAccount/{{ account_index }}" method="post">
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            username: <input type="text" class="grow" value="{{ account.userName }}" name="username"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            authToken: <input type="text" class="grow" value="{{ account.auth }}" name="authToken"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            token: <input type="text" class="grow" value="{{ account.token }}" name="token"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            deviceInfo: <input type="text" class="grow" value="{{ account.deviceInfo }}" name="deviceInfo"/>
+        </label>
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            userAgent: <input type="text" class="grow" value="{{ account.userAgent }}" name="userAgent"/>
+        </label>
+
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            City:
+            <select name="city" class="grow">
+                <option value=""  ></option>
+                {% for city in cities %}
+                    <option value="{{ city.city }}" {% if account.city == city.city %} selected {% endif %}>
+                        {{ city.city }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="input w-3/4 mx-auto block input-bordered flex items-center gap-2">
+            bio: <textarea class="grow" name="bio">{{ account.bio }}</textarea>
+        </label>
+
+        <input class="btn btn-primary" type="submit" value="Update Account">
+    </form>
+
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-secondary">Cancel</a>
+    </div>
+
+</body>
+</html>

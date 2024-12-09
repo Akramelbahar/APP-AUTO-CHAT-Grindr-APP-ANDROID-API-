@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Generation Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Generation Form</h1>
+    <form id="chatGenerationForm">
+        <label for="accessToken">Access Token</label>
+        <input type="text" id="accessToken" name="accessToken" required>
+
+        <label for="version">Version</label>
+        <input type="text" id="version" name="version" required>
+
+        <label for="manifestVersion">Manifest Version</label>
+        <input type="text" id="manifestVersion" name="manifestVersion" required>
+
+        <label for="isAPI">Is API</label>
+        <select id="isAPI" name="isAPI" required>
+            <option value="true">True</option>
+            <option value="false">False</option>
+        </select>
+
+        <label for="app">App</label>
+        <select id="app" name="app" required>
+            <option value="snapchat">Snapchat</option>
+            <option value="reddit">Reddit</option>
+            <option value="instagram">Instagram</option>
+            <option value="x">X</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="telegram">Telegram</option>
+        </select>
+
+        <label for="isOF">Is OF</label>
+        <select id="isOF" name="isOF" required>
+            <option value="true">True</option>
+            <option value="false">False</option>
+        </select>
+
+        <label for="brand">Brand</label>
+        <select id="brand" name="brand" required>
+            <option value="cupidbotofm">CupidBotOFM</option>
+        </select>
+
+        <label for="product">Product</label>
+        <select id="product" name="product" required>
+            <option value="ofm-snap">OFM Snap</option>
+            <option value="ofm-reddit">OFM Reddit</option>
+            <option value="ofm-ig">OFM IG</option>
+            <option value="ofm-wa">OFM WA</option>
+            <option value="ofm-tg">OFM TG</option>
+            <option value="ofm-x">OFM X</option>
+        </select>
+
+        <label for="isFemale">Is Female</label>
+        <select id="isFemale" name="isFemale" required>
+            <option value="true">True</option>
+            <option value="false">False</option>
+        </select>
+
+        <label for="accountID">Account ID</label>
+        <input type="text" id="accountID" name="accountID" required>
+
+        <label for="recipientID">Recipient ID</label>
+        <input type="text" id="recipientID" name="recipientID" required>
+
+        <label for="creator_id">Creator ID</label>
+        <input type="number" id="creator_id" name="creator_id" required>
+
+        <label for="preset_id">Preset ID</label>
+        <input type="number" id="preset_id" name="preset_id" required>
+
+        <label for="name">Creator Name</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="age">Creator Age</label>
+        <input type="number" id="age" name="age" required>
+
+        <label for="userInfo">User Info</label>
+        <textarea id="userInfo" name="userInfo" required maxlength="200"></textarea>
+
+        <label for="chatStyle">Chat Style</label>
+        <select id="chatStyle" name="chatStyle" required>
+            <option value="youth">Youth</option>
+            <option value="mature">Mature</option>
+        </select>
+
+        <label for="platformSource">Platform Source</label>
+        <input type="text" id="platformSource" name="platformSource" required>
+
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" required>
+
+        <label for="settingDayInfo">Setting Day Info</label>
+        <textarea id="settingDayInfo" name="settingDayInfo" required></textarea>
+
+        <label for="settingNightInfo">Setting Night Info</label>
+        <textarea id="settingNightInfo" name="settingNightInfo" required></textarea>
+
+        <label for="ctaInfo">CTA Info</label>
+        <textarea id="ctaInfo" name="ctaInfo" required></textarea>
+
+        <label for="responseLanguage">Response Language</label>
+        <input type="text" id="responseLanguage" name="responseLanguage" required>
+
+        <label for="responseLanguageCode">Response Language Code</label>
+        <input type="text" id="responseLanguageCode" name="responseLanguageCode" required>
+
+        <h3>Messages</h3>
+        <label for="msgID">Message ID</label>
+        <input type="text" id="msgID" name="msgID" required>
+
+        <label for="msgTimestamp">Timestamp</label>
+        <input type="number" id="msgTimestamp" name="msgTimestamp" required>
+
+        <label for="msg">Message</label>
+        <textarea id="msg" name="msg" required></textarea>
+
+        <label for="isIncoming">Is Incoming</label>
+        <select id="isIncoming" name="isIncoming" required>
+            <option value="true">True</option>
+            <option value="false">False</option>
+        </select>
+
+        <button type="submit">Generate Chat Response</button>
+    </form>
+
+    <script>
+        document.getElementById('chatGenerationForm').onsubmit = function(event) {
+            event.preventDefault(); // Prevent form submission for demonstration
+            const formData = new FormData(this);
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+            console.log(JSON.stringify(jsonData, null, 2)); // Log the JSON data for demonstration
+        };
+    </script>
+</body>
+</html>

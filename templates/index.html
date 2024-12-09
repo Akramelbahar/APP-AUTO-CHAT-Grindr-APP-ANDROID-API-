@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='full.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='tail.js') }}"></script>
+</head>
+<body>
+    <div class="flex justify-center gap-4 my-5">
+        <a class="btn btn-secondary" href="/newProfile">Create A new profile</a>
+        <a class="btn btn-primary" href="/proxy-management">Manage Proxies</a>
+    </div>
+        
+    <div class="flex justify-center flex-col text-center gap-5 items-center">
+        <h1>Profiles:</h1>
+        {% for profile in profiles %}
+            <a href="{{ ('profile/'+profile.id ) }}" class="btn btn-accent w-3/4">{{ profile.name }}</a>
+        {% endfor %}
+    </div>
+</body>
+</html>

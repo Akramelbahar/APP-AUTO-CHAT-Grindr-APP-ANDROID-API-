@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='full.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='tail.js') }}"></script>
+</head>
+<body class="min-h-screen bg-base-200">
+    <div class="navbar bg-base-300">
+        <a href="/" class="btn w-full mx-6 btn-warning text-xl">Home</a>
+    </div>
+
+    <form action="/newProfile" method="POST" enctype="multipart/form-data" class="container mx-auto px-4 py-8">
+        <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title hidden">Bulk Import</h2>
+                <div class="form-control mb-4 hidden">
+                    <label class="label">Proxies</label>
+                    <textarea name="proxies" class="textarea textarea-bordered h-32" 
+                            placeholder="host:port:username:password"></textarea>
+                </div>
+                <div class="form-control mb-4">
+                    <label class="label">Accounts</label>
+                    <textarea name="accounts" class="textarea textarea-bordered h-32" 
+                            placeholder="username:authToken:token:deviceInfo:userAgent"></textarea>
+                </div>
+                <div class="form-control">
+                    <label class="label">Cities</label>
+                    <textarea name="cities" class="textarea textarea-bordered h-32" 
+                            placeholder="cityName:lat:long"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title">Profile Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">Profile Name</label>
+                        <input type="text" name="profileName" class="input input-bordered" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Display Name</label>
+                        <input type="text" name="displayName" class="input input-bordered" />
+                    </div>
+                    <div class="form-control col-span-2">
+                        <label class="label">About Me</label>
+                        <textarea name="aboutMe" class="textarea textarea-bordered h-24"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Age</label>
+                        <input type="number" name="age" value="18" min="18" max="99" class="input input-bordered" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Height Range (cm)</label>
+                        <div class="flex gap-2">
+                            <input type="number" name="heightFrom" placeholder="From" min="140" max="220" 
+                                   class="input input-bordered w-1/2" />
+                            <input type="number" name="heightTo" placeholder="To" min="140" max="220" 
+                                   class="input input-bordered w-1/2" />
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Looking For</label>
+                        <select name="lookingFor" class="select select-bordered">
+                            <option value="">Select...</option>
+                            <option value="Chat">Chat</option>
+                            <option value="Dates">Dates</option>
+                            <option value="Friends">Friends</option>
+                            <option value="Networking">Networking</option>
+                            <option value="Relationship">Relationship</option>
+                            <option value="Right Now">Right Now</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Meet At</label>
+                        <select name="meetAt" class="select select-bordered">
+                            <option value="">Select...</option>
+                            <option value="My Place">My Place</option>
+                            <option value="Your Place">Your Place</option>
+                            <option value="Bar">Bar</option>
+                            <option value="Coffee Shop">Coffee Shop</option>
+                            <option value="Restaurant">Restaurant</option>
+                            <option value="Club">Club</option>
+                            <option value="Outdoors">Outdoors</option>
+                            <option value="Gym">Gym</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Accept NSFW Pics</label>
+                        <select name="acceptNSFWPics" class="select select-bordered">
+                            <option value="">Select...</option>
+                            <option value="Do Not Show">Do Not Show</option>
+                            <option value="Yes">Yes</option>
+                            <option value="Not At First">Not At First</option>
+                            <option value="Never">Never</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl mb-6 hidden">
+            <div class="card-body">
+                <h2 class="card-title">Chat Configuration</h2>
+                <div class="form-control">
+                    <label class="label">Chat Mode</label>
+                    <select name="chatMode" class="select select-bordered" onchange="toggleGPTSettings(this.value)">
+                        <option value="bot">Private API Bot</option>
+                        <option value="gpt">ChatGPT</option>
+                    </select>
+                </div>
+
+                <div id="gptSettings" class="mt-4" style="display: none;">
+                    <h3 class="text-lg font-bold mb-4">GPT Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label">Primary OpenAI API Key</label>
+                            <input type="password" name="openaiKey1" class="input input-bordered" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label">Secondary OpenAI API Key (Backup)</label>
+                            <input type="password" name="openaiKey2" class="input input-bordered" />
+                        </div>
+                        <div class="form-control col-span-2">
+                            <label class="label">GPT Framework/Instructions</label>
+                            <textarea name="gptFramework" class="textarea textarea-bordered h-32"></textarea>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<div class="card bg-base-100 shadow-xl mb-6 hidden">
+    <div class="card-body">
+        <h2 class="card-title ">API Configuration</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <div class="form-control">
+                <label class="label">Access Token</label>
+                <input type="text" name="accessToken" class="input input-bordered" />
+            </div>
+            <div class="form-control">
+                <label class="label">Version</label>
+                <input type="text" name="version" class="input input-bordered" />
+            </div>
+            <div class="form-control">
+                <label class="label">Manifest Version</label>
+                <input type="text" name="manifestVersion" class="input input-bordered" />
+            </div>
+            <div class="form-control">
+                <label class="label">Creator ID</label>
+                <input type="text" name="creator_id" class="input input-bordered" />
+            </div>
+            <div class="form-control">
+                <label class="label">Preset ID</label>
+                <input type="text" name="preset_id" class="input input-bordered" />
+            </div>
+            <div class="form-control">
+                <label class="label">Chat Style</label>
+                <select name="chatStyle" class="select select-bordered">
+                    <option value="youth">Youth</option>
+                    <option value="mature">Mature</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <label class="label">Typo Rate</label>
+                <input type="number" name="typoRate" min="0" max="100" step="0.01"  class="input input-bordered" />
+            </div>
+
+            <div class="form-control col-span-2">
+                <label class="label">Model Info</label>
+                <textarea name="userInfo" class="textarea textarea-bordered h-24" maxlength="200" 
+                        placeholder="Add second person info, max 200 characters"></textarea>
+            </div>
+            <div class="form-control col-span-2">
+                <label class="label">Daytime Info</label>
+                <textarea name="settingDayInfo" class="textarea textarea-bordered h-24" maxlength="200"
+                        placeholder="Add second person info, max 200 characters"></textarea>
+            </div>
+            <div class="form-control col-span-2">
+                <label class="label">Nighttime Info</label>
+                <textarea name="settingNightInfo" class="textarea textarea-bordered h-24" maxlength="200"
+                        placeholder="Add second person info, max 200 characters"></textarea>
+            </div>
+            <div class="form-control col-span-2">
+                <label class="label">CTA Info</label>
+                <textarea name="ctaInfo" class="textarea textarea-bordered h-24" maxlength="200"
+                        placeholder="Add second person info, max 200 characters"></textarea>
+            </div>
+
+            <input type="hidden" name="isAPI" value="true">
+            <input type="hidden" name="app" value="grindr">
+            <input type="hidden" name="isOF" value="true">
+            <input type="hidden" name="brand" value="cupidbotofm">
+            <input type="hidden" name="product" value="ofm-grindr">
+            <input type="hidden" name="isFemale" value="true">
+            <input type="hidden" name="platformSource" value="grindr">
+            <input type="hidden" name="chooseRandomCTA" value="true">
+            <input type="hidden" name="defaultSettings" value="true">
+            <input type="hidden" name="aiAugmentation" value="true">
+            <input type="hidden" name="mediaRate" value="1">
+            <input type="hidden" name="mediaPools" value="sexy">
+            <input type="hidden" name="messagingFromAnotherAccountDelay" value="4">
+            <input type="hidden" name="isFollowUp" value="true">
+        </div>
+    </div>
+</div>
+        <div class="card bg-base-100 shadow-xl mb-6 hidden">
+            <div class="card-body">
+                <h2 class="card-title">Message Templates</h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="form-control">
+                        <label class="label">Opener Template</label>
+                        <textarea name="spintax" class="textarea textarea-bordered h-24"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Follow Up Messages</label>
+                        <textarea name="followUpSpintax" class="textarea textarea-bordered h-24"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Follow Up After CTA</label>
+                        <textarea name="followUpAfterCTA" class="textarea textarea-bordered h-24"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">CTA Script</label>
+                        <textarea name="ctaScript" class="textarea textarea-bordered h-24"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">Objection Handling</label>
+                        <textarea name="objectionHandling" class="textarea textarea-bordered h-24"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl mb-6 hidden">
+            <div class="card-body">
+                <h2 class="card-title">Language Settings</h2>
+                <div class="form-control">
+                    <label class="label">Response Language</label>
+                    <select name="responseLanguage" class="select select-bordered w-full max-w-xs" 
+                            onchange="updateLanguageCode(this.value)">
+                        <option value="English">English</option>
+                        <option value="French">French</option>
+                        <option value="Spanish">Spanish</option>
+                    </select>
+                    <input type="hidden" name="responseLanguageCode" id="responseLanguageCode" value="en">
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl mb-6 hidden">
+            <div class="card-body">
+                <h2 class="card-title">Sequence Settings</h2>
+                <div class="form-control">
+                    <label class="label cursor-pointer">
+                        <span class="label-text">Enable Sequence</span>
+                        <input type="checkbox" class="toggle toggle-primary" name="enableSequence" />
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-center mb-8">
+            <button type="submit" class="btn btn-primary w-1/2">Create Profile</button>
+        </div>
+    </form>
+
+    <script>
+        function updateLanguageCode(language) {
+            const codeMap = {
+                'English': 'en',
+                'French': 'fr',
+                'Spanish': 'es'
+            };
+            document.getElementById('responseLanguageCode').value = codeMap[language] || 'en';
+        }
+
+        function toggleGPTSettings(mode) {
+            const gptSettings = document.getElementById('gptSettings');
+            gptSettings.style.display = mode === 'gpt' ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const mode = document.querySelector('[name="chatMode"]').value;
+            toggleGPTSettings(mode);
+        });
+    </script>
+</body>
+</html>
